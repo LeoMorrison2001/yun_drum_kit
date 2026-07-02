@@ -26,6 +26,7 @@ class DrumAudioEngine {
           sampleRate: 48000,
           bufferSize: 512,
           channels: Channels.stereo,
+          lowLatency: true,
         );
         _engine.setMaxActiveVoiceCount(32);
       }
