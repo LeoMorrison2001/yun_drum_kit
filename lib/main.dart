@@ -1,121 +1,251 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
+
+  runApp(const YunDrumKitApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class YunDrumKitApp extends StatelessWidget {
+  const YunDrumKitApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Yun Drum Kit',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        scaffoldBackgroundColor: const Color(0xFF11071A),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const HomePage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _HomePageState extends State<HomePage> {
+  final List<_Ripple> _ripples = [];
+  int _nextRippleId = 0;
+  Duration? _lastTouchTime;
+  Offset? _lastTouchPosition;
 
-  void _incrementCounter() {
+  void _showRipple(PointerDownEvent event) {
+    final lastTime = _lastTouchTime;
+    final lastPosition = _lastTouchPosition;
+    final isDuplicate =
+        lastTime != null &&
+        lastPosition != null &&
+        event.timeStamp - lastTime < const Duration(milliseconds: 60) &&
+        (event.localPosition - lastPosition).distance < 24;
+
+    _lastTouchTime = event.timeStamp;
+    _lastTouchPosition = event.localPosition;
+
+    if (isDuplicate) return;
+
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _ripples
+        ..clear()
+        ..add(_Ripple(id: _nextRippleId++, position: event.localPosition));
+    });
+  }
+
+  void _removeRipple(int id) {
+    if (!mounted) return;
+
+    setState(() {
+      _ripples.removeWhere((ripple) => ripple.id == id);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
+      body: Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: _showRipple,
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            SafeArea(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1100),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Row(
+                      children: const [
+                        Expanded(
+                          child: FeatureCard(
+                            icon: Icons.music_note_rounded,
+                            title: '架子鼓模拟',
+                          ),
+                        ),
+                        SizedBox(width: 24),
+                        Expanded(
+                          child: FeatureCard(
+                            icon: Icons.graphic_eq_rounded,
+                            title: '节奏编辑',
+                          ),
+                        ),
+                        SizedBox(width: 24),
+                        Expanded(
+                          child: FeatureCard(
+                            icon: Icons.library_music_rounded,
+                            title: '鼓谱生成',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            for (final ripple in _ripples)
+              Positioned(
+                left: ripple.position.dx - 40,
+                top: ripple.position.dy - 40,
+                child: IgnorePointer(
+                  child: TouchRipple(
+                    key: ValueKey(ripple.id),
+                    onFinished: () => _removeRipple(ripple.id),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Ripple {
+  const _Ripple({required this.id, required this.position});
+
+  final int id;
+  final Offset position;
+}
+
+class TouchRipple extends StatefulWidget {
+  const TouchRipple({super.key, required this.onFinished});
+
+  final VoidCallback onFinished;
+
+  @override
+  State<TouchRipple> createState() => _TouchRippleState();
+}
+
+class _TouchRippleState extends State<TouchRipple>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _progress;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 550),
+    );
+    _progress = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        widget.onFinished();
+      }
+    });
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _progress,
+      builder: (context, child) {
+        final progress = _progress.value;
+        return Opacity(
+          opacity: 1 - progress,
+          child: Transform.scale(scale: 0.25 + progress, child: child),
+        );
+      },
+      child: Container(
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: const Color(0xFFB99CFF), width: 2),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x66B99CFF),
+              blurRadius: 12,
+              spreadRadius: 1,
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+    );
+  }
+}
+
+class FeatureCard extends StatelessWidget {
+  const FeatureCard({super.key, required this.icon, required this.title});
+
+  final IconData icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1.35,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFF21152C),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFF382747)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x66000000),
+              blurRadius: 24,
+              offset: Offset(0, 12),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 54, color: const Color(0xFFB99CFF)),
+            const SizedBox(height: 22),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
