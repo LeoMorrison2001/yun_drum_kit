@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:yun_drum_kit/pages/rhythm_creation_page.dart';
 import 'package:yun_drum_kit/pages/virtual_drum_page.dart';
 
 Future<void> main() async {
@@ -104,10 +105,18 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         const SizedBox(width: 24),
-                        const Expanded(
+                        Expanded(
                           child: FeatureCard(
                             icon: Icons.graphic_eq_rounded,
                             title: '节奏创作',
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (context) =>
+                                      const RhythmCreationPage(),
+                                ),
+                              );
+                            },
                           ),
                         ),
                         const SizedBox(width: 24),
