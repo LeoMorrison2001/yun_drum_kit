@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
@@ -9,7 +7,7 @@ class DrumAudioEngine {
 
   static final DrumAudioEngine instance = DrumAudioEngine._();
 
-  final SoLoud _engine = SoLoud.instance;
+  SoLoud? _engine;
   final Map<String, AudioSource> _sounds = {};
   Future<void>? _initializing;
 
@@ -21,14 +19,15 @@ class DrumAudioEngine {
 
   Future<void> _initialize(Iterable<String> assetPaths) async {
     try {
-      if (!_engine.isInitialized) {
-        await _engine.init(
+      final engine = _engine ??= SoLoud.instance;
+      if (!engine.isInitialized) {
+        await engine.init(
           sampleRate: 48000,
           bufferSize: 512,
           channels: Channels.stereo,
           lowLatency: true,
         );
-        _engine.setMaxActiveVoiceCount(32);
+        engine.setMaxActiveVoiceCount(32);
       }
 
       final paths = assetPaths.toSet();
@@ -50,7 +49,9 @@ class DrumAudioEngine {
         data.offsetInBytes,
         data.offsetInBytes + data.lengthInBytes,
       );
-      _sounds[assetPath] = await _engine.loadMem(
+      final engine = _engine;
+      if (engine == null || !engine.isInitialized) return;
+      _sounds[assetPath] = await engine.loadMem(
         assetPath,
         bytes,
         mode: LoadMode.memory,
@@ -62,8 +63,9 @@ class DrumAudioEngine {
 
   void play(String assetPath) {
     final sound = _sounds[assetPath];
-    if (sound == null || !_engine.isInitialized) return;
+    final engine = _engine;
+    if (sound == null || engine == null || !engine.isInitialized) return;
 
-    _engine.play(sound);
+    engine.play(sound);
   }
 }

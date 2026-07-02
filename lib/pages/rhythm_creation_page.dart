@@ -10,11 +10,7 @@ const _tracks = [
     color: Color(0xFF70A1FF),
     asset: 'assets/audio/drums/hihat_closed.wav',
   ),
-  (
-    label: '底鼓',
-    color: Color(0xFF00D2D3),
-    asset: 'assets/audio/drums/kick.wav',
-  ),
+  (label: '底鼓', color: Color(0xFF00D2D3), asset: 'assets/audio/drums/kick.wav'),
   (
     label: '军鼓',
     color: Color(0xFFFF6B81),
@@ -93,11 +89,8 @@ class _RhythmCreationPageState extends State<RhythmCreationPage> {
 
   bool get _isPlaying => _timer != null;
   List<List<List<bool>>> get _measures =>
-      _measureData ??= [
-        _createEmptyMeasure(_TimeSignature.fourFour.stepCount),
-      ];
-  List<List<bool>> get _currentMeasure =>
-      _measures[_selectedMeasureIndex];
+      _measureData ??= [_createEmptyMeasure(_TimeSignature.fourFour.stepCount)];
+  List<List<bool>> get _currentMeasure => _measures[_selectedMeasureIndex];
 
   @override
   void initState() {
@@ -112,16 +105,12 @@ class _RhythmCreationPageState extends State<RhythmCreationPage> {
   }
 
   Duration get _stepDuration {
-    final milliseconds =
-        60000 / _bpm / _timeSignature.subdivisionsPerBeat;
+    final milliseconds = 60000 / _bpm / _timeSignature.subdivisionsPerBeat;
     return Duration(microseconds: (milliseconds * 1000).round());
   }
 
   List<List<bool>> _createEmptyMeasure(int stepCount) {
-    return List.generate(
-      _tracks.length,
-      (_) => List.filled(stepCount, false),
-    );
+    return List.generate(_tracks.length, (_) => List.filled(stepCount, false));
   }
 
   void _toggleStep(int trackIndex, int stepIndex) {
@@ -171,7 +160,7 @@ class _RhythmCreationPageState extends State<RhythmCreationPage> {
   }
 
   void _changeBpm(int amount) {
-    final nextBpm = (_bpm + amount).clamp(40, 240) as int;
+    final nextBpm = (_bpm + amount).clamp(40, 240);
     if (nextBpm == _bpm) return;
 
     setState(() => _bpm = nextBpm);
@@ -181,18 +170,15 @@ class _RhythmCreationPageState extends State<RhythmCreationPage> {
   }
 
   Future<void> _editBpm() async {
-    final controller = TextEditingController(text: '$_bpm');
+    var inputValue = '$_bpm';
     final result = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: const Color(0xFF21152C),
-          title: const Text(
-            '设置速度',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: TextField(
-            controller: controller,
+          title: const Text('设置速度', style: TextStyle(color: Colors.white)),
+          content: TextFormField(
+            initialValue: inputValue,
             autofocus: true,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -201,7 +187,8 @@ class _RhythmCreationPageState extends State<RhythmCreationPage> {
               suffixText: 'BPM',
               helperText: '请输入 40–240',
             ),
-            onSubmitted: (value) => Navigator.of(dialogContext).pop(value),
+            onChanged: (value) => inputValue = value,
+            onFieldSubmitted: (value) => Navigator.of(dialogContext).pop(value),
           ),
           actions: [
             TextButton(
@@ -209,20 +196,18 @@ class _RhythmCreationPageState extends State<RhythmCreationPage> {
               child: const Text('取消'),
             ),
             FilledButton(
-              onPressed: () =>
-                  Navigator.of(dialogContext).pop(controller.text),
+              onPressed: () => Navigator.of(dialogContext).pop(inputValue),
               child: const Text('确定'),
             ),
           ],
         );
       },
     );
-    controller.dispose();
 
     final value = int.tryParse(result ?? '');
     if (value == null || !mounted) return;
 
-    final nextBpm = value.clamp(40, 240) as int;
+    final nextBpm = value.clamp(40, 240);
     setState(() => _bpm = nextBpm);
     if (_isPlaying) {
       _restartTimerFromCurrentStep();
@@ -330,8 +315,7 @@ class _RhythmCreationPageState extends State<RhythmCreationPage> {
               child: ListView.separated(
                 padding: const EdgeInsets.fromLTRB(24, 10, 24, 24),
                 itemCount: _tracks.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 8),
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
                 itemBuilder: (context, trackIndex) {
                   final track = _tracks[trackIndex];
                   return _TrackRow(
@@ -339,8 +323,7 @@ class _RhythmCreationPageState extends State<RhythmCreationPage> {
                     color: track.color,
                     steps: _currentMeasure[trackIndex],
                     visibleStepCount: _timeSignature.stepCount,
-                    subdivisionsPerBeat:
-                        _timeSignature.subdivisionsPerBeat,
+                    subdivisionsPerBeat: _timeSignature.subdivisionsPerBeat,
                     currentStep: _currentStep,
                     onStepPressed: (stepIndex) =>
                         _toggleStep(trackIndex, stepIndex),
@@ -559,8 +542,7 @@ class _MeasureBar extends StatelessWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: measureCount,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(width: 8),
+                separatorBuilder: (context, index) => const SizedBox(width: 8),
                 itemBuilder: (context, index) {
                   final isSelected = selectedIndex == index;
                   return Center(

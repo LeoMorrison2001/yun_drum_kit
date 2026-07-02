@@ -47,11 +47,7 @@ const _drumPads = [
     color: Color(0xFFFF6B81),
     asset: 'assets/audio/drums/snare.wav',
   ),
-  (
-    label: '底鼓',
-    color: Color(0xFF00D2D3),
-    asset: 'assets/audio/drums/kick.wav',
-  ),
+  (label: '底鼓', color: Color(0xFF00D2D3), asset: 'assets/audio/drums/kick.wav'),
 ];
 
 class VirtualDrumPage extends StatefulWidget {
@@ -114,18 +110,16 @@ class _VirtualDrumPageState extends State<VirtualDrumPage> {
                   builder: (context, constraints) {
                     const spacing = 18.0;
                     final padWidth = (constraints.maxWidth - spacing * 4) / 5;
-                    final padHeight =
-                        (constraints.maxHeight - spacing) / 2;
+                    final padHeight = (constraints.maxHeight - spacing) / 2;
 
                     return GridView.builder(
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 5,
-                            crossAxisSpacing: spacing,
-                            mainAxisSpacing: spacing,
-                            childAspectRatio: padWidth / padHeight,
-                          ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 5,
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
+                        childAspectRatio: padWidth / padHeight,
+                      ),
                       itemCount: _drumPads.length,
                       itemBuilder: (context, index) {
                         final pad = _drumPads[index];
@@ -202,9 +196,7 @@ class _DrumPadState extends State<DrumPad> {
             ),
             boxShadow: [
               BoxShadow(
-                color: widget.color.withValues(
-                  alpha: isPressed ? 0.72 : 0.12,
-                ),
+                color: widget.color.withValues(alpha: isPressed ? 0.72 : 0.12),
                 blurRadius: isPressed ? 28 : 10,
                 spreadRadius: isPressed ? 4 : 0,
               ),
@@ -226,9 +218,7 @@ class _DrumPadState extends State<DrumPad> {
                     borderRadius: BorderRadius.circular(18),
                     gradient: RadialGradient(
                       colors: [
-                        widget.color.withValues(
-                          alpha: isPressed ? 0.42 : 0.1,
-                        ),
+                        widget.color.withValues(alpha: isPressed ? 0.42 : 0.1),
                         widget.color.withValues(alpha: 0),
                       ],
                       stops: const [0, 1],

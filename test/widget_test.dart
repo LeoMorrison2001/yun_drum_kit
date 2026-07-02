@@ -25,4 +25,23 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
     expect(find.byType(TouchRipple), findsNothing);
   });
+
+  testWidgets('可以进入独立鼓谱编辑页面', (tester) async {
+    await tester.pumpWidget(const YunDrumKitApp());
+
+    await tester.tap(find.text('鼓谱'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('鼓谱生成'), findsOneWidget);
+    expect(find.text('节奏编辑'), findsOneWidget);
+    expect(find.byKey(const Key('drum-score-preview')), findsOneWidget);
+
+    await tester.tap(find.text('120 BPM'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), '60');
+    await tester.tap(find.text('确定'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('60 BPM'), findsOneWidget);
+  });
 }

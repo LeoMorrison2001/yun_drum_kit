@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:yun_drum_kit/pages/drum_score_page.dart';
 import 'package:yun_drum_kit/pages/rhythm_creation_page.dart';
 import 'package:yun_drum_kit/pages/virtual_drum_page.dart';
 
@@ -97,8 +98,7 @@ class _HomePageState extends State<HomePage> {
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute<void>(
-                                  builder: (context) =>
-                                      const VirtualDrumPage(),
+                                  builder: (context) => const VirtualDrumPage(),
                                 ),
                               );
                             },
@@ -120,10 +120,17 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         const SizedBox(width: 24),
-                        const Expanded(
+                        Expanded(
                           child: FeatureCard(
                             icon: Icons.library_music_rounded,
                             title: '鼓谱',
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (context) => const DrumScorePage(),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ],
