@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:yun_drum_kit/audio/drum_audio_engine.dart';
+import 'package:yun_drum_kit/audio/sample_accurate_rhythm_player.dart';
 
 const _tracks = [
   (
@@ -76,18 +78,21 @@ class RhythmCreationPage extends StatefulWidget {
   State<RhythmCreationPage> createState() => _RhythmCreationPageState();
 }
 
-class _RhythmCreationPageState extends State<RhythmCreationPage> {
+class _RhythmCreationPageState extends State<RhythmCreationPage>
+    with SingleTickerProviderStateMixin {
   final DrumAudioEngine _audioEngine = DrumAudioEngine.instance;
+  final SampleAccurateRhythmPlayer _loopPlayer = SampleAccurateRhythmPlayer();
   List<List<List<bool>>>? _measureData;
 
   _TimeSignature _timeSignature = _TimeSignature.fourFour;
-  Timer? _timer;
+  late final Ticker _playbackTicker;
+  bool _isPreparing = false;
   int _selectedMeasureIndex = 0;
   int? _playbackMeasureIndex;
   int? _currentStep;
   int _bpm = 120;
 
-  bool get _isPlaying => _timer != null;
+  bool get _isPlaying => _isPreparing || _loopPlayer.isPlaying;
   List<List<List<bool>>> get _measures =>
       _measureData ??= [_createEmptyMeasure(_TimeSignature.fourFour.stepCount)];
   List<List<bool>> get _currentMeasure => _measures[_selectedMeasureIndex];
@@ -95,18 +100,15 @@ class _RhythmCreationPageState extends State<RhythmCreationPage> {
   @override
   void initState() {
     super.initState();
+    _playbackTicker = createTicker(_syncUiToAudioClock);
     _audioEngine.initialize(_tracks.map((track) => track.asset));
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _playbackTicker.dispose();
+    unawaited(_loopPlayer.dispose());
     super.dispose();
-  }
-
-  Duration get _stepDuration {
-    final milliseconds = 60000 / _bpm / _timeSignature.subdivisionsPerBeat;
-    return Duration(microseconds: (milliseconds * 1000).round());
   }
 
   List<List<bool>> _createEmptyMeasure(int stepCount) {
@@ -114,6 +116,7 @@ class _RhythmCreationPageState extends State<RhythmCreationPage> {
   }
 
   void _toggleStep(int trackIndex, int stepIndex) {
+    if (_isPlaying) _stop();
     setState(() {
       final steps = _currentMeasure[trackIndex];
       steps[stepIndex] = !steps[stepIndex];
@@ -165,7 +168,7 @@ class _RhythmCreationPageState extends State<RhythmCreationPage> {
 
     setState(() => _bpm = nextBpm);
     if (_isPlaying) {
-      _restartTimerFromCurrentStep();
+      _restartPlayback();
     }
   }
 
@@ -210,7 +213,7 @@ class _RhythmCreationPageState extends State<RhythmCreationPage> {
     final nextBpm = value.clamp(40, 240);
     setState(() => _bpm = nextBpm);
     if (_isPlaying) {
-      _restartTimerFromCurrentStep();
+      _restartPlayback();
     }
   }
 
@@ -233,54 +236,62 @@ class _RhythmCreationPageState extends State<RhythmCreationPage> {
   }
 
   void _togglePlayback() {
-    _isPlaying ? _stop() : _playFromStart();
+    _isPlaying ? _stop() : unawaited(_playFromStart());
   }
 
-  void _playFromStart() {
-    _timer?.cancel();
-    _timer = Timer.periodic(_stepDuration, (_) => _advance());
+  Future<void> _playFromStart() async {
+    if (_isPreparing) return;
     setState(() {
+      _isPreparing = true;
       _selectedMeasureIndex = 0;
       _playbackMeasureIndex = 0;
       _currentStep = 0;
     });
-    _playStep(0, 0);
+    final started = await _loopPlayer.start(
+      RhythmLoopSpec(
+        measures: _measures,
+        assetPaths: _tracks.map((track) => track.asset).toList(),
+        bpm: _bpm,
+        stepCount: _timeSignature.stepCount,
+        subdivisionsPerBeat: _timeSignature.subdivisionsPerBeat,
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _isPreparing = false);
+    if (started) {
+      _playbackTicker.start();
+    } else {
+      setState(() {
+        _playbackMeasureIndex = null;
+        _currentStep = null;
+      });
+    }
   }
 
-  void _advance() {
-    var nextStep = (_currentStep ?? -1) + 1;
-    var nextMeasure = _playbackMeasureIndex ?? 0;
-
-    if (nextStep >= _timeSignature.stepCount) {
-      nextStep = 0;
-      nextMeasure = (nextMeasure + 1) % _measures.length;
+  void _syncUiToAudioClock(Duration _) {
+    final cursor = _loopPlayer.cursor;
+    if (cursor == null) return;
+    if (_playbackMeasureIndex == cursor.measureIndex &&
+        _currentStep == cursor.stepIndex) {
+      return;
     }
-
     setState(() {
-      _currentStep = nextStep;
-      _playbackMeasureIndex = nextMeasure;
-      _selectedMeasureIndex = nextMeasure;
+      _playbackMeasureIndex = cursor.measureIndex;
+      _selectedMeasureIndex = cursor.measureIndex;
+      _currentStep = cursor.stepIndex;
     });
-    _playStep(nextMeasure, nextStep);
   }
 
-  void _playStep(int measureIndex, int stepIndex) {
-    for (var trackIndex = 0; trackIndex < _tracks.length; trackIndex++) {
-      if (_measures[measureIndex][trackIndex][stepIndex]) {
-        _audioEngine.play(_tracks[trackIndex].asset);
-      }
-    }
-  }
-
-  void _restartTimerFromCurrentStep() {
-    _timer?.cancel();
-    _timer = Timer.periodic(_stepDuration, (_) => _advance());
+  void _restartPlayback() {
+    _stop();
+    unawaited(_playFromStart());
   }
 
   void _stop() {
-    _timer?.cancel();
+    _playbackTicker.stop();
+    unawaited(_loopPlayer.stop());
     setState(() {
-      _timer = null;
+      _isPreparing = false;
       _playbackMeasureIndex = null;
       _currentStep = null;
     });

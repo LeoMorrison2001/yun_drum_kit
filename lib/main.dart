@@ -96,11 +96,9 @@ class _HomePageState extends State<HomePage> {
                             icon: Icons.music_note_rounded,
                             title: '虚拟鼓',
                             onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (context) => const VirtualDrumPage(),
-                                ),
-                              );
+                              Navigator.of(
+                                context,
+                              ).push(_fadeRoute(const VirtualDrumPage()));
                             },
                           ),
                         ),
@@ -110,12 +108,9 @@ class _HomePageState extends State<HomePage> {
                             icon: Icons.graphic_eq_rounded,
                             title: '节奏创作',
                             onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (context) =>
-                                      const RhythmCreationPage(),
-                                ),
-                              );
+                              Navigator.of(
+                                context,
+                              ).push(_fadeRoute(const RhythmCreationPage()));
                             },
                           ),
                         ),
@@ -125,11 +120,9 @@ class _HomePageState extends State<HomePage> {
                             icon: Icons.library_music_rounded,
                             title: '鼓谱',
                             onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (context) => const DrumScorePage(),
-                                ),
-                              );
+                              Navigator.of(
+                                context,
+                              ).push(_fadeRoute(const DrumScorePage()));
                             },
                           ),
                         ),
@@ -155,6 +148,24 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+}
+
+Route<void> _fadeRoute(Widget page) {
+  return PageRouteBuilder<void>(
+    pageBuilder: (context, animation, secondaryAnimation) => page,
+    transitionDuration: const Duration(milliseconds: 180),
+    reverseTransitionDuration: const Duration(milliseconds: 140),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        ),
+        child: child,
+      );
+    },
+  );
 }
 
 class _Ripple {

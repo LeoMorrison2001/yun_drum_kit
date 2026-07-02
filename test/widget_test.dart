@@ -1,8 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:yun_drum_kit/audio/sample_accurate_rhythm_player.dart';
 import 'package:yun_drum_kit/main.dart';
 
 void main() {
+  test('节奏循环按采样位置生成', () async {
+    final rendered = await renderRhythmLoop(
+      RhythmLoopSpec(
+        measures: [
+          [
+            [true, ...List.filled(15, false)],
+          ],
+        ],
+        assetPaths: const ['assets/audio/drums/kick.wav'],
+        bpm: 120,
+        stepCount: 16,
+        subdivisionsPerBeat: 4,
+      ),
+    );
+
+    expect(String.fromCharCodes(rendered.wavBytes.take(4)), 'RIFF');
+    expect(rendered.duration, const Duration(seconds: 2));
+    expect(rendered.stepDuration, const Duration(milliseconds: 125));
+  });
+
   testWidgets('应用可以正常启动', (tester) async {
     await tester.pumpWidget(const YunDrumKitApp());
 
