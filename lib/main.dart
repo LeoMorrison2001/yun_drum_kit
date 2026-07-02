@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:yun_drum_kit/pages/virtual_drum_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,25 +88,33 @@ class _HomePageState extends State<HomePage> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Row(
-                      children: const [
+                      children: [
                         Expanded(
                           child: FeatureCard(
                             icon: Icons.music_note_rounded,
-                            title: '架子鼓模拟',
+                            title: '虚拟鼓',
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (context) =>
+                                      const VirtualDrumPage(),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                        SizedBox(width: 24),
-                        Expanded(
+                        const SizedBox(width: 24),
+                        const Expanded(
                           child: FeatureCard(
                             icon: Icons.graphic_eq_rounded,
-                            title: '节奏编辑',
+                            title: '节奏创作',
                           ),
                         ),
-                        SizedBox(width: 24),
-                        Expanded(
+                        const SizedBox(width: 24),
+                        const Expanded(
                           child: FeatureCard(
                             icon: Icons.library_music_rounded,
-                            title: '鼓谱生成',
+                            title: '鼓谱',
                           ),
                         ),
                       ],
@@ -209,43 +218,56 @@ class _TouchRippleState extends State<TouchRipple>
 }
 
 class FeatureCard extends StatelessWidget {
-  const FeatureCard({super.key, required this.icon, required this.title});
+  const FeatureCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.onTap,
+  });
 
   final IconData icon;
   final String title;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: 1.35,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: const Color(0xFF21152C),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFF382747)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x66000000),
-              blurRadius: 24,
-              offset: Offset(0, 12),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: const Color(0xFF21152C),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFF382747)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x66000000),
+                  blurRadius: 24,
+                  offset: Offset(0, 12),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 54, color: const Color(0xFFB99CFF)),
-            const SizedBox(height: 22),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-              ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 54, color: const Color(0xFFB99CFF)),
+                const SizedBox(height: 22),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

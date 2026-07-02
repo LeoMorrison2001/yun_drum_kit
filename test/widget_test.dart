@@ -8,9 +8,9 @@ void main() {
 
     expect(find.byType(MaterialApp), findsOneWidget);
     expect(find.byType(Scaffold), findsOneWidget);
-    expect(find.text('架子鼓模拟'), findsOneWidget);
-    expect(find.text('节奏编辑'), findsOneWidget);
-    expect(find.text('鼓谱生成'), findsOneWidget);
+    expect(find.text('虚拟鼓'), findsOneWidget);
+    expect(find.text('节奏创作'), findsOneWidget);
+    expect(find.text('鼓谱'), findsOneWidget);
   });
 
   testWidgets('新触摸会替换正在播放的波纹', (tester) async {
